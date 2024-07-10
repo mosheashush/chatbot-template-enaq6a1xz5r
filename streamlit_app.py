@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+import openai
 
 # Show title and description.
 st.title("💬 Chatbot")
@@ -16,9 +16,8 @@ openai_api_key = st.text_input("OpenAI API Key", type="password")
 if not openai_api_key:
     st.info("Please add your OpenAI API key to continue.", icon="🗝️")
 else:
-
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
+    # Set the API key for the OpenAI client
+    openai.api_key = openai_api_key
 
     # Create a session state variable to store the chat messages. This ensures that the
     # messages persist across reruns.
@@ -33,24 +32,23 @@ else:
     # Create a chat input field to allow the user to enter a message. This will display
     # automatically at the bottom of the page.
     if prompt := st.chat_input("What is up?"):
-
         # Store and display the current prompt.
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
         # Generate a response using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+        response = openai.ChatCompletion.create(
+            model="gpt-4-turbo",
             messages=[
                 {"role": m["role"], "content": m["content"]}
                 for m in st.session_state.messages
-            ],
-            stream=True,
+            ]
         )
 
         # Stream the response to the chat using `st.write_stream`, then store it in 
         # session state.
+        response_message = response['choices'][0]['message']['content']
         with st.chat_message("assistant"):
-            response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            st.markdown(response_message)
+        st.session_state.messages.append({"role": "assistant", "content": response_message})
